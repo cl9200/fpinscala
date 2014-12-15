@@ -59,7 +59,59 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def length[A](l: List[A]): Int = sys.error("todo")
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = sys.error("todo")
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = 
+    l match {
+      case Nil => z
+      case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+    }          
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = sys.error("todo")
+  def map[A,B](l: List[A])(f: A => B): List[B] = 
+    foldRight(l, Nil:List[B])((a,b) => Cons(f(a), b))
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] =
+    foldRight(as, Nil:List[A])((a, b) => if (f(a)) Cons(a, b) else b)
+
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] =
+    foldLeft(as, Nil:List[B])((a, b) => append(a, f(b)))
+
+  def filter2[A](as: List[A])(f: A => Boolean): List[A] = 
+    flatMap(as)(a => if (f(a)) List(a) else Nil)
+
+  def addList(as: List[Int], bs:List[Int]): List[Int] =
+    as match {
+      case Cons(x, xs) => 
+        bs match {
+          case Cons(y, ys) => Cons(x+y, addList(xs, ys))
+          case Nil => Cons(x, addList(xs, Nil))
+        }
+      case Nil =>
+        bs match {
+          case Cons(y, ys) => Cons(y, addList(Nil, ys))
+          case Nil => Nil
+        }
+    }
+
+  def zipWith[A,B,C](as: List[A], bs: List[B])(f:(A,B) => C):List[C] = 
+    as match {
+      case Cons(x, xs) => 
+        bs match {
+          case Cons(y, ys) => Cons(f(x, y), zipWith(xs, ys)(f))
+          case Nil => Nil
+        }
+      case Nil => Nil
+    }
+
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = {
+    def run(a: List[A], b: List[A]): Boolean = 
+      b match {
+        case Nil => true
+        case Cons(x, xs) => 
+          a match {
+            case Nil => false
+            case Cons(y, ys) if (x == y) => run(ys, xs) || run(ys, sub)
+            case Cons(y, ys) if (x != y) => run(ys, sub)
+          }
+      }
+    run(sup, sub)
+  }
 }
